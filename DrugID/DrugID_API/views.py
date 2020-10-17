@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
 
-from DrugID_API.models import Asset, Drug, Set, Result
+from DrugID_API.models import Asset, Drug, Set, Result, Session
 from DrugID_API.serializers import ResultSerializer
 
 import os
@@ -23,10 +23,14 @@ class DrugSet(APIView):
 
         #Set time limit
         limit =int(os.getenv('TIME_LIMIT', 3000))
-        
+
+        #get group from request session
+        session_id = request.GET.get('session_id')
+        session = Session.objects.get(id=session_id)
+
         #select n random drugs
         #TODO this method is potentially slow and may need updating
-        drugs = Asset.objects.all().order_by('?').filter(group=2)[:numdrugs]
+        drugs = Asset.objects.all().order_by('?').filter(group=session.last_group)[:numdrugs]
         drugslist = []
         for i in drugs:
             drugslist.append(i)
