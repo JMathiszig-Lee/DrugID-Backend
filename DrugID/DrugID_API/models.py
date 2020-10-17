@@ -7,7 +7,7 @@ class User(models.Model):
 	email = models.EmailField(max_length=75)
 
 # Drug labeling group
-class Group(model.Model):
+class Group(models.Model):
 
 	class group(models.IntegerChoices):
 		pharma = 1
@@ -16,34 +16,31 @@ class Group(model.Model):
 
 # User session
 class Session(models.Model):
-	#session_id = models.CharField(max_length=100)
 	user_id = models.ForeignKey(User.id)
 	last_group = models.IntergerField()
 
 # Drug data
 class Drug(models.Model):
-	#drug_id = models.CharField(max_length=10)
 	name = models.CharField(max_length=100)
 
 # Drug asset
-class Asset
+class Asset(models.Model):
 	drug_id = model.ForeignKey(Drug.id)
 	asset_url = models.CharField(max_length=200)
 	group = models.ForeignKey(Group.group)
 
 # Set data
-class Set:
+class Set(models.Model):
 	group = models.ForeignKey(Group.group)
 	asset_id = models.ForeignKey(Asset.id)
-	target = model.ForeignKey(Drug.id)
+	target = models.ForeignKey(Drug.id)
 	time_limit = models.IntergerField()
 
 
 # Results of test
-class Result:
-	#set_id = models.CharField(max_length = 100)
+class Result(models.Model):
 	time = models.TimeField()
-	correct = BooleanField()
+	correct = models.BooleanField()
 	sequence_id = models.CharField(max_length=100)
-	session_id = models.ForeignKey(Session.id) # check
+	session_id = models.ForeignKey(Session.id)
 	group = models.ForeignKey(group.id)
