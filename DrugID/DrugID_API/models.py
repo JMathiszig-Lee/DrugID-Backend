@@ -8,7 +8,7 @@ class User(models.Model):
 	email = models.EmailField(max_length=75)
 
 # Drug labeling group
-class Group(model.Model):
+class Group(models.Model):
 
 	class Group(models.IntegerChoices):
 		pharma = 1
@@ -19,7 +19,7 @@ class Group(model.Model):
 class Session(models.Model):
 	session_id = models.CharField(max_length=100)
 	user_id = models.CharField(max_length=100)
-	last_group = models.IntergerField()
+	#last_group = models.IntergerField()
 
 # Drug data
 class Drug(models.Model):
@@ -27,7 +27,7 @@ class Drug(models.Model):
 	name = models.CharField(max_length=100)
 
 # Drug asset
-class Asset
+class Asset(models.Model):
 	drug_id = models.CharField(max_length=10)
 	asset_url = models.CharField(max_length=200)
 
@@ -48,6 +48,6 @@ class Set:
 class Result:
 	set_id = models.CharField(max_length = 100)
 	time = models.TimeField()
-	correct = BooleanField()
+	#correct = BooleanField()
 	sequence_id = models.CharField(max_length=100)
 	session_id = models.CharField(max_length=100)
