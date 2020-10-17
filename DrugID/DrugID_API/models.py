@@ -16,8 +16,8 @@ class Group(models.Model):
 
 # User session
 class Session(models.Model):
-	user_id = models.ForeignKey(User.id)
-	last_group = models.IntergerField()
+	user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+	last_group = models.IntegerField()
 
 # Drug data
 class Drug(models.Model):
@@ -25,16 +25,16 @@ class Drug(models.Model):
 
 # Drug asset
 class Asset(models.Model):
-	drug_id = model.ForeignKey(Drug.id)
+	drug_id = models.ForeignKey(Drug, on_delete=models.CASCADE)
 	asset_url = models.CharField(max_length=200)
-	group = models.ForeignKey(Group.group)
+	group = models.ForeignKey(Group, on_delete=models.CASCADE)
 
 # Set data
 class Set(models.Model):
-	group = models.ForeignKey(Group.group)
-	asset_id = models.ForeignKey(Asset.id)
-	target = models.ForeignKey(Drug.id)
-	time_limit = models.IntergerField()
+	group = models.ForeignKey(Group, on_delete=models.CASCADE)
+	asset_id = models.ForeignKey(Asset, on_delete=models.CASCADE)
+	target = models.ForeignKey(Drug, on_delete=models.CASCADE)
+	time_limit = models.IntegerField()
 
 
 # Results of test
@@ -42,5 +42,5 @@ class Result(models.Model):
 	time = models.TimeField()
 	correct = models.BooleanField()
 	sequence_id = models.CharField(max_length=100)
-	session_id = models.ForeignKey(Session.id)
-	group = models.ForeignKey(group.id)
+	session_id = models.ForeignKey(Session, on_delete=models.CASCADE)
+	group = models.ForeignKey(Group, on_delete=models.CASCADE)
