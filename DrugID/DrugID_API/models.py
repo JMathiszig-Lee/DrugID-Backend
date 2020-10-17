@@ -7,9 +7,7 @@ class User(models.Model):
 	email = models.EmailField(max_length=75)
 
 # Drug labeling group
-class Group(models.Model):
-
-	class group(models.IntegerChoices):
+class Group(models.IntegerChoices):
 		pharma = 1
 		ISO = 2
 		black_white = 3
@@ -17,7 +15,7 @@ class Group(models.Model):
 # User session
 class Session(models.Model):
 	user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-	last_group = models.IntegerField()
+	last_group = models.IntegerField(choices = Group.choices)
 
 # Drug data
 class Drug(models.Model):
@@ -27,11 +25,11 @@ class Drug(models.Model):
 class Asset(models.Model):
 	drug_id = models.ForeignKey(Drug, on_delete=models.CASCADE)
 	asset_url = models.CharField(max_length=200)
-	group = models.ForeignKey(Group, on_delete=models.CASCADE)
+	group = models.IntegerField(choices = Group.choices)
 
 # Set data
 class Set(models.Model):
-	group = models.ForeignKey(Group, on_delete=models.CASCADE)
+	group =  models.IntegerField(choices = Group.choices)
 	asset_id = models.ForeignKey(Asset, on_delete=models.CASCADE)
 	target = models.ForeignKey(Drug, on_delete=models.CASCADE)
 	time_limit = models.IntegerField()
@@ -39,8 +37,8 @@ class Set(models.Model):
 
 # Results of test
 class Result(models.Model):
-	time = models.TimeField()
+	time = models.CharField(max_length=20)
 	correct = models.BooleanField()
 	sequence_id = models.CharField(max_length=100)
 	session_id = models.ForeignKey(Session, on_delete=models.CASCADE)
-	group = models.ForeignKey(Group, on_delete=models.CASCADE)
+	group =  models.IntegerField(choices = Group.choices)
