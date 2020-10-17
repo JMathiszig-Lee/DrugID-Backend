@@ -20,7 +20,10 @@ class DrugSet(APIView):
     def get(self, request, format=None):
         #get number of drugs to return but default is 8
         numdrugs =int(os.getenv('NUMBER_DRUGS', 8))
+
+        #Set time limit
         limit =int(os.getenv('TIME_LIMIT', 3000))
+        
         #select n random drugs
         #TODO this method is potentially slow and may need updating
         drugs = Asset.objects.all().order_by('?').filter(group=2)[:numdrugs]
