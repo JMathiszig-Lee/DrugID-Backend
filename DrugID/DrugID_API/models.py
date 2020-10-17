@@ -4,50 +4,46 @@ from django.db import models
 
 # User Details
 class User(models.Model):
-	user_id = models.CharField(max_length=100)
 	email = models.EmailField(max_length=75)
 
 # Drug labeling group
 class Group(model.Model):
 
-	class Group(models.IntegerChoices):
+	class group(models.IntegerChoices):
 		pharma = 1
 		ISO = 2
 		black_white = 3
 
 # User session
 class Session(models.Model):
-	session_id = models.CharField(max_length=100)
-	user_id = models.CharField(max_length=100)
+	#session_id = models.CharField(max_length=100)
+	user_id = models.ForeignKey(User.id)
 	last_group = models.IntergerField()
 
 # Drug data
 class Drug(models.Model):
-	drug_id = models.CharField(max_length=10)
+	#drug_id = models.CharField(max_length=10)
 	name = models.CharField(max_length=100)
 
 # Drug asset
 class Asset
-	drug_id = models.CharField(max_length=10)
+	drug_id = model.ForeignKey(Drug.id)
 	asset_url = models.CharField(max_length=200)
+	group = models.ForeignKey(Group.group)
 
-	class Group(models.IntegerChoices):
-		pharma = 1
-		ISO = 2
-		black_white = 3
-
-# ??
+# Set data
 class Set:
+	group = models.ForeignKey(Group.group)
+	asset_id = models.ForeignKey(Asset.id)
+	target = model.ForeignKey(Drug.id)
+	time_limit = models.IntergerField()
 
-	class Group(models.IntegerChoices):
-		pharma = 1
-		ISO = 2
-		black_white = 3
 
-# Result data
+# Results of test
 class Result:
-	set_id = models.CharField(max_length = 100)
+	#set_id = models.CharField(max_length = 100)
 	time = models.TimeField()
 	correct = BooleanField()
 	sequence_id = models.CharField(max_length=100)
-	session_id = models.CharField(max_length=100)
+	session_id = models.ForeignKey(Session.id) # check
+	group = models.ForeignKey(group.id)
