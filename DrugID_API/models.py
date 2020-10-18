@@ -49,7 +49,9 @@ class Set(models.Model):
 
 # Results of test
 class Result(models.Model):
+	set_id = models.ForeignKey(Set, on_delete=models.CASCADE)
 	time = models.CharField(max_length=20)
+	selected = models.ForeignKey(Asset, on_delete=models.DO_NOTHING)
 	correct = models.BooleanField()
 	sequence_id = models.CharField(max_length=100)
 	session_id = models.ForeignKey(Session, on_delete=models.CASCADE)
