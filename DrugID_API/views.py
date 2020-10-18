@@ -31,7 +31,7 @@ class DrugSet(APIView):
 
         #get local hostname 
         try:
-            HOSTNAME = socket.gethostname()
+            HOSTNAME = request.META['HTTP_HOST']
         except:
             HOSTNAME = 'localhost'
         #select n random drugs
