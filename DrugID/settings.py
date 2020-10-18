@@ -134,9 +134,8 @@ REST_FRAMEWORK = {
     ]
 }
 
-<<<<<<< HEAD:DrugID/settings.py
 # Activate Django-Heroku.
 django_heroku.settings(locals())
-=======
+
+#CORS headers
 CORS_ALLOW_ALL_ORIGINS = True
->>>>>>> origin:DrugID/DrugID/settings.py
