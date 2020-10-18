@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
+import django_heroku
 
 from pathlib import Path
 
@@ -25,7 +26,7 @@ SECRET_KEY = 'stan7nvm2t7jx4f=_pq4u-o%ns9brv79f24^!bid$2d0kv98w&'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.herokuapp.com']
 
 
 # Application definition
@@ -133,4 +134,8 @@ REST_FRAMEWORK = {
     ]
 }
 
+# Activate Django-Heroku.
+django_heroku.settings(locals())
+
+#CORS headers
 CORS_ALLOW_ALL_ORIGINS = True
