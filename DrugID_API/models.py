@@ -51,7 +51,7 @@ class Set(models.Model):
 class Result(models.Model):
 	set_id = models.ForeignKey(Set, on_delete=models.CASCADE, null=True)
 	time = models.CharField(max_length=20)
-	selected = models.ForeignKey(Asset, on_delete=models.CASCADE, null=True)
+	selected = models.CharField(max_length=100)
 	correct = models.BooleanField()
 	sequence_id = models.CharField(max_length=100)
 	session_id = models.ForeignKey(Session, on_delete=models.CASCADE)
