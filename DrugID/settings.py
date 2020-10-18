@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'DrugID_API',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +51,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'DrugID.urls'
@@ -131,5 +134,9 @@ REST_FRAMEWORK = {
     ]
 }
 
+<<<<<<< HEAD:DrugID/settings.py
 # Activate Django-Heroku.
 django_heroku.settings(locals())
+=======
+CORS_ALLOW_ALL_ORIGINS = True
+>>>>>>> origin:DrugID/DrugID/settings.py

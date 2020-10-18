@@ -11,6 +11,7 @@ djangorestframework = "*"
 markdown = "*"
 django-heroku = "*"
 gunicorn = "*"
+django-cors-headers = "*"
 
 [requires]
 python_version = "3.8"
