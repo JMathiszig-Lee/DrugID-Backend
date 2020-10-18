@@ -36,7 +36,7 @@ class Command(BaseCommand):
                 #print(drug.id) debugging
 
                 # creates directory for database
-                path = "assets/" + type + "/" + name_label
+                path = "static/" + type + "/" + name_label
                 # print(path) debugging
 
                 # creates code depending on the label type
