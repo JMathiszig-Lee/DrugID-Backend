@@ -11,7 +11,7 @@ class SetSerializer(serializers.HyperlinkedModelSerializer):
 class ResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = Result
-        fields = ['time', 'correct', 'sequence_id', 'session_id', 'session_id', 'group']
+        fields = ['set_id', 'time', 'selected', 'correct', 'sequence_id', 'session_id', 'group']
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
