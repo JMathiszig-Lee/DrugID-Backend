@@ -10,6 +10,7 @@ from DrugID_API.serializers import ResultSerializer, UserSerializer
 
 import os
 import random
+import socket
 
 # Create your views here.
 @permission_classes((permissions.AllowAny,))
@@ -28,6 +29,11 @@ class DrugSet(APIView):
         session_id = request.GET.get('session_id')
         session = Session.objects.get(id=session_id)
 
+        #get local hostname 
+        try:
+            HOSTNAME = socket.gethostname()
+        except:
+            HOSTNAME = 'localhost'
         #select n random drugs
         #TODO this method is potentially slow and may need updating
         drugs = Asset.objects.all().order_by('?').filter(group=session.last_group)[:numdrugs]
@@ -35,15 +41,15 @@ class DrugSet(APIView):
         for i in drugs:
             drugslist.append({
                 "Id": i.drug_id.name, 
-                "ImageSrc":i.asset_url,
+                "ImageSrc":HOSTNAME + "/" + i.asset_url,
                 })
         
         target = random.choice(drugslist)
         payload = {
-            "set_id": "fixed",
-            "ampoules": drugslist,
-            "target_drug": target["Id"],
-            "time_limit": limit
+            "SetId": "fixed",
+            "Ampoules": drugslist,
+            "TargetDrug": target["Id"],
+            "TimeLimit": limit
         }
         #save as a set
         return Response(payload)
