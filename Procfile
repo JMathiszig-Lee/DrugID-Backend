@@ -1,1 +1,1 @@
-web: gunicorn DrugID.wsgi
+web: gunicorn DrugID.DrugID.wsgi
