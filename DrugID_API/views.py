@@ -45,14 +45,19 @@ class DrugSet(APIView):
                 "ImageSrc":request.META['wsgi.url_scheme'] + "://" + HOSTNAME + "/" + i.asset_url,
                 })
         
-        target = random.choice(drugslist)
+        target = random.choice(drugs)
+
+        s = Set(group=session.last_group, asset_id=drugs[0], target=target.drug_id, time_limit=limit)
+        s.save()
+
         payload = {
-            "SetId": "fixed",
+            "SetId": s.id,
             "Ampoules": drugslist,
-            "TargetDrug": target["Id"],
+            "TargetDrug": target.drug_id.name,
             "TimeLimit": limit
         }
         #save as a set
+        
         return Response(payload)
 
 class ResultsViewSet(viewsets.ModelViewSet):
