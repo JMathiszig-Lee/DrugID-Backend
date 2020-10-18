@@ -5,6 +5,18 @@ from django.db import models
 # User Details
 class User(models.Model):
 	email = models.EmailField(max_length=75)
+	SPECIALITY_CHOICES = [
+		('GAS', 'Anaesthetics'),
+		('A+E', 'Emergency Medicine'),
+		('ICM', 'Intensive Care'),
+		('OTH', 'Other')
+	]
+	speciality = models.CharField(
+		max_length=3,
+		choices= SPECIALITY_CHOICES,
+		default='GAS')
+	years_experience = models.IntegerField(max_length=2, null=True)
+
 
 # Drug labeling group
 class Group(models.IntegerChoices):
