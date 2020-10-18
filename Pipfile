@@ -12,6 +12,7 @@ markdown = "*"
 django-heroku = "*"
 gunicorn = "*"
 django-cors-headers = "*"
+django-spa = "*"
 
 [requires]
 python_version = "3.8"
