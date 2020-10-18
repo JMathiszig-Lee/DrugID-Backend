@@ -21,6 +21,7 @@ from DrugID_API import views
 
 router = routers.DefaultRouter()
 router.register(r'results', views.ResultsViewSet)
+router.register(r'users', views.UserViewSet)
 # router.register(r'getdrugs', views.DrugSet, 'getdrugs')
 
 
