@@ -12,7 +12,7 @@ class Command(BaseCommand):
         label_types = ["industry", "iso", "blackwhite"]
 
         # Populates the Drug table
-        names_drug = os.listdir(Path("DrugID_API/assets/industry"))
+        names_drug = os.listdir(Path("DrugID_API/static/industry"))
         for name in names_drug:
             nm = name[:-4]
             data_input_drug = Drug(name=nm)
@@ -21,7 +21,7 @@ class Command(BaseCommand):
         # loop through 3 types populating the Asset table
         for type in label_types:
             # Directory for each type > 'DrugID_API/assets/' for release > '../../assets/' for debugging
-            label_type_directory = "DrugID_API/assets/" + type + "/"
+            label_type_directory = "DrugID_API/static/" + type + "/"
 
             # put all assets names for type in array
             label_array = os.listdir(Path(label_type_directory))

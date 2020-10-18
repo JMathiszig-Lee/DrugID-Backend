@@ -34,6 +34,7 @@ class DrugSet(APIView):
             HOSTNAME = request.META['HTTP_HOST']
         except:
             HOSTNAME = 'localhost'
+
         #select n random drugs
         #TODO this method is potentially slow and may need updating
         drugs = Asset.objects.all().order_by('?').filter(group=session.last_group)[:numdrugs]
@@ -41,7 +42,7 @@ class DrugSet(APIView):
         for i in drugs:
             drugslist.append({
                 "Id": i.drug_id.name, 
-                "ImageSrc":HOSTNAME + "/" + i.asset_url,
+                "ImageSrc":request.META['wsgi.url_scheme'] + "://" + HOSTNAME + "/" + i.asset_url,
                 })
         
         target = random.choice(drugslist)
