@@ -42,7 +42,7 @@ class Asset(models.Model):
 # Set data
 class Set(models.Model):
 	group =  models.IntegerField(choices = Group.choices)
-	asset_id = models.ForeignKey(Asset, on_delete=models.CASCADE)
+	asset_id = models.ManyToManyField(Asset)
 	target = models.ForeignKey(Drug, on_delete=models.CASCADE)
 	time_limit = models.IntegerField()
 

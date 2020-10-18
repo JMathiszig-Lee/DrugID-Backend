@@ -39,27 +39,33 @@ class DrugSet(APIView):
         #TODO this method is potentially slow and may need updating
         drugs = Asset.objects.all().order_by('?').filter(group=session.last_group)[:numdrugs]
         drugslist = []
+
+        
         for i in drugs:
+            #s.asset_id.add(i)
             drugslist.append({
                 "Id": i.drug_id.name, 
                 "ImageSrc":request.META['wsgi.url_scheme'] + "://" + HOSTNAME + "/" + i.asset_url,
                 })
         
         target = random.choice(drugs)
-
-        s = Set(group=session.last_group, asset_id=drugs[0], target=target.drug_id, time_limit=limit)
+        s = Set(group=session.last_group, target=target.drug_id, time_limit=limit)
+        s.save()
+        s.asset_id.set(drugs)
         s.save()
 
         payload = {
             "SetId": s.id,
             "Ampoules": drugslist,
             "TargetDrug": target.drug_id.name,
-            "TimeLimit": limit
+            "TimeLimit": limit,
+            "Group": session.last_group
         }
         #save as a set
         
         return Response(payload)
 
+@permission_classes((permissions.AllowAny,))
 class ResultsViewSet(viewsets.ModelViewSet):
     """
     Simple results viewset
