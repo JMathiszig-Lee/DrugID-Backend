@@ -4,6 +4,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
+from rest_framework import status
 
 from DrugID_API.models import Asset, Drug, Set, Result, Session, User
 from DrugID_API.serializers import ResultSerializer, UserSerializer
@@ -64,6 +65,13 @@ class DrugSet(APIView):
         #save as a set
         
         return Response(payload)
+    
+    def post(self, request):
+        serializer = ResultSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @permission_classes((permissions.AllowAny,))
 class ResultsViewSet(viewsets.ModelViewSet):
