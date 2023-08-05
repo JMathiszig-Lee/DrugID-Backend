@@ -53,9 +53,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'DrugID_API',
     'corsheaders',
+    'import_export',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'spa.middleware.SPAMiddleware',
@@ -65,7 +67,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
 ]
 
@@ -152,6 +153,11 @@ REST_FRAMEWORK = {
 django_heroku.settings(locals())
 
 #CORS headers
-CORS_ALLOW_ALL_ORIGINS = True
-
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
 STATICFILES_STORAGE = 'spa.storage.SPAStaticFilesStorage'

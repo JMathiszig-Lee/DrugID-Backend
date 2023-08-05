@@ -1,6 +1,13 @@
 from django.db import models
+import random
 
 # Create your models here.
+
+# Drug labeling group
+class Group(models.IntegerChoices):
+		pharma = 1
+		ISO = 2
+		black_white = 3
 
 # User Details
 class User(models.Model):
@@ -15,14 +22,14 @@ class User(models.Model):
 		max_length=3,
 		choices= SPECIALITY_CHOICES,
 		default='GAS')
-	years_experience = models.IntegerField(max_length=2, null=True)
+	years_experience = models.IntegerField(null=True)
+	first_group = models.IntegerField(choices = Group.choices, blank=True)
 
-
-# Drug labeling group
-class Group(models.IntegerChoices):
-		pharma = 1
-		ISO = 2
-		black_white = 3
+	def save(self, *args, **kwargs):
+		if not self.first_group:
+			self.first_group = random.randint(1,3)
+		super(User, self).save(*args, **kwargs)
+		
 
 # User session
 class Session(models.Model):

@@ -28,6 +28,7 @@ class DrugSet(APIView):
 
         #get group from request session
         session_id = request.GET.get('session_id')
+        print(request.GET)
         session = Session.objects.get(id=session_id)
 
         #get local hostname 
@@ -68,6 +69,15 @@ class DrugSet(APIView):
     
     def post(self, request):
         serializer = ResultSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+@permission_classes((permissions.AllowAny,))
+class UserReg(APIView):
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
