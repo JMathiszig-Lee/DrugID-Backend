@@ -9,6 +9,11 @@ order containing each of the three label groups exactly once. A one-use magic li
 participant in. Trial progress is held on the server, so refreshing the page resumes the same
 trial instead of losing progress or creating duplicates.
 
+Registration and returning access are deliberately separate. A new registration rejects an email
+that is already enrolled and directs the participant to the returning-participant form. Returning
+participants enter only their email address to receive a fresh one-use link to the same study run;
+unknown addresses receive the same generic response and no participant record is created.
+
 ## Start with Docker
 
 Requirements: Docker with the Compose plugin.

@@ -10,7 +10,7 @@ from urllib.parse import quote
 from django.conf import settings
 from django.contrib.auth import get_user_model, login
 from django.core.mail import send_mail
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Count, F, Q
 from django.urls import reverse
 from django.utils import timezone
@@ -100,64 +100,50 @@ def _create_protocol_v2_run(participant: Participant) -> StudyRun:
     return run
 
 
-def request_magic_link(*, email: str, speciality: str, years_experience: int) -> str:
-    """Register a participant/run and send a one-use authentication link.
+REGISTERED_EMAIL_MESSAGE = (
+    "This email is already registered. Request a returning-participant link instead."
+)
 
-    A repeated request reuses the participant's original protocol-v2 run,
-    including a completed run, so its assigned ordering never changes.
-    """
+
+def _registered_email_error() -> ValidationError:
+    return ValidationError({"email": REGISTERED_EMAIL_MESSAGE})
+
+
+def _create_magic_link(*, participant: Participant, run: StudyRun) -> tuple[MagicLink, str]:
+    """Create a rate-limited link while the owning participant row is locked."""
 
     raw_token = secrets.token_urlsafe(32)
     now = timezone.now()
 
-    with transaction.atomic():
-        participant = Participant.objects.filter(email__iexact=email).first()
-        if participant is None:
-            participant, _ = Participant.objects.get_or_create(
-                email=email,
-                defaults={
-                    "speciality": speciality,
-                    "years_experience": years_experience,
-                },
-            )
-        participant = Participant.objects.select_for_update().get(pk=participant.pk)
-
-        run = (
-            StudyRun.objects.select_for_update()
-            .filter(participant=participant, protocol_version=2)
-            .order_by("created_at", "id")
-            .first()
+    issuance_window_start = now - timedelta(seconds=settings.MAGIC_LINK_EMAIL_WINDOW_SECONDS)
+    recent_links = MagicLink.objects.filter(
+        email=participant.email,
+        created_at__gte=issuance_window_start,
+        delivery_failed_at__isnull=True,
+    ).order_by("created_at")
+    if recent_links.count() >= settings.MAGIC_LINK_EMAIL_LIMIT:
+        oldest = recent_links.first()
+        retry_at = oldest.created_at + timedelta(seconds=settings.MAGIC_LINK_EMAIL_WINDOW_SECONDS)
+        wait_seconds = max(1, int((retry_at - now).total_seconds()))
+        raise Throttled(
+            wait=wait_seconds,
+            detail="Too many sign-in links have been requested. Please try again later.",
         )
-        if run is None:
-            run = _create_protocol_v2_run(participant)
+    magic_link = MagicLink.objects.create(
+        token_hash=token_digest(raw_token),
+        email=participant.email,
+        speciality=participant.speciality,
+        years_experience=participant.years_experience,
+        participant=participant,
+        study_run=run,
+        expires_at=now + timedelta(seconds=settings.MAGIC_LINK_TTL_SECONDS),
+    )
+    return magic_link, raw_token
 
-        issuance_window_start = now - timedelta(seconds=settings.MAGIC_LINK_EMAIL_WINDOW_SECONDS)
-        recent_links = MagicLink.objects.filter(
-            email=participant.email,
-            created_at__gte=issuance_window_start,
-            delivery_failed_at__isnull=True,
-        ).order_by("created_at")
-        if recent_links.count() >= settings.MAGIC_LINK_EMAIL_LIMIT:
-            oldest = recent_links.first()
-            retry_at = oldest.created_at + timedelta(
-                seconds=settings.MAGIC_LINK_EMAIL_WINDOW_SECONDS
-            )
-            wait_seconds = max(1, int((retry_at - now).total_seconds()))
-            raise Throttled(
-                wait=wait_seconds,
-                detail="Too many sign-in links have been requested. Please try again later.",
-            )
-        magic_link = MagicLink.objects.create(
-            token_hash=token_digest(raw_token),
-            email=participant.email,
-            speciality=participant.speciality,
-            years_experience=participant.years_experience,
-            participant=participant,
-            study_run=run,
-            expires_at=now + timedelta(seconds=settings.MAGIC_LINK_TTL_SECONDS),
-        )
 
+def _deliver_magic_link(*, participant: Participant, magic_link: MagicLink, raw_token: str) -> str:
     magic_link_url = f"{settings.PUBLIC_APP_URL}/verify#token={quote(raw_token, safe='')}"
+
     try:
         send_mail(
             subject="Your Ampoule Study sign-in link",
@@ -178,13 +164,69 @@ def request_magic_link(*, email: str, speciality: str, years_experience: int) ->
     return magic_link_url
 
 
+def request_magic_link(*, email: str, speciality: str, years_experience: int) -> str:
+    """Register a new participant and send their first authentication link."""
+
+    try:
+        with transaction.atomic():
+            if Participant.objects.filter(email__iexact=email).exists():
+                raise _registered_email_error()
+            participant = Participant.objects.create(
+                email=email,
+                speciality=speciality,
+                years_experience=years_experience,
+            )
+            run = _create_protocol_v2_run(participant)
+            magic_link, raw_token = _create_magic_link(participant=participant, run=run)
+    except IntegrityError:
+        # The case-insensitive database constraint resolves concurrent registration races.
+        if Participant.objects.filter(email__iexact=email).exists():
+            raise _registered_email_error() from None
+        raise
+
+    return _deliver_magic_link(
+        participant=participant,
+        magic_link=magic_link,
+        raw_token=raw_token,
+    )
+
+
+def request_returning_magic_link(*, email: str) -> str | None:
+    """Send a resume link when the participant exists; otherwise reveal nothing."""
+
+    with transaction.atomic():
+        participant = Participant.objects.select_for_update().filter(email__iexact=email).first()
+        if participant is None:
+            return None
+
+        run = (
+            StudyRun.objects.select_for_update()
+            .filter(participant=participant, protocol_version=2)
+            .order_by("created_at", "id")
+            .first()
+        )
+        if run is None:
+            run = _create_protocol_v2_run(participant)
+        magic_link, raw_token = _create_magic_link(participant=participant, run=run)
+
+    return _deliver_magic_link(
+        participant=participant,
+        magic_link=magic_link,
+        raw_token=raw_token,
+    )
+
+
 def verify_magic_link(request, raw_token: str) -> StudyRun:
     digest = token_digest(raw_token)
     now = timezone.now()
 
     with transaction.atomic():
         link = (
-            MagicLink.objects.select_for_update()
+            # ``participant.account`` is nullable and therefore outer-joined.
+            # Scope PostgreSQL's lock to the non-null research rows explicitly.
+            MagicLink.objects.select_for_update(
+                of=("self", "participant", "study_run"),
+            )
             .select_related("participant__account", "study_run")
             .filter(token_hash=digest)
             .first()

@@ -3,6 +3,7 @@ import type {
   MagicLinkRequest,
   MagicLinkResponse,
   NextTrialResponse,
+  ReturningMagicLinkRequest,
   StudySessionStatus,
   TrialResultRequest,
   TrialResultResponse,
@@ -12,6 +13,12 @@ import type {
 
 export function requestMagicLink(details: MagicLinkRequest): Promise<MagicLinkResponse> {
   return apiRequest('/api/auth/magic-link/', { method: 'POST', body: details })
+}
+
+export function requestReturningMagicLink(
+  details: ReturningMagicLinkRequest,
+): Promise<MagicLinkResponse> {
+  return apiRequest('/api/auth/magic-link/returning/', { method: 'POST', body: details })
 }
 
 export function verifyMagicLink(token: string): Promise<VerifyResponse> {

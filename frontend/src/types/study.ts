@@ -7,6 +7,10 @@ export interface MagicLinkRequest {
   years_experience: number
 }
 
+export interface ReturningMagicLinkRequest {
+  email: string
+}
+
 export interface MagicLinkResponse {
   detail: string
   debug_magic_link?: string

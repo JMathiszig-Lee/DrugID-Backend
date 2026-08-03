@@ -450,7 +450,7 @@ main:focus {
     align-items: flex-start;
   }
 
-  .site-header nav a:not(.nav-join) {
+  .site-header nav a:not(.nav-join):not(.nav-return) {
     display: none;
   }
 

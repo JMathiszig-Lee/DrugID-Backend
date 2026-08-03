@@ -29,7 +29,7 @@ from DrugID_API.models import (
     TutorialTrial,
     TutorialTrialResult,
 )
-from DrugID_API.services import request_magic_link
+from DrugID_API.services import request_magic_link, request_returning_magic_link
 
 
 @override_settings(
@@ -76,6 +76,20 @@ class StudyApiTestCase(TestCase):
         self.assertEqual(parsed.query, "")
         token = parse_qs(parsed.fragment)["token"][0]
         return token, Participant.objects.get(email=email)
+
+    def request_returning_link(self, client, *, email="participant@example.test"):
+        response = client.post(
+            reverse("returning-magic-link-request"),
+            {"email": email},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 202, response.data)
+        link = response.data.get("debug_magic_link")
+        if link is None:
+            return response, None
+        parsed = urlsplit(link)
+        self.assertEqual(parsed.query, "")
+        return response, parse_qs(parsed.fragment)["token"][0]
 
     def verify(self, client, token, *, complete_tutorial=True):
         response = client.post(reverse("magic-link-verify"), {"token": token}, format="json")
@@ -132,7 +146,8 @@ class StudyApiTestCase(TestCase):
 class MagicLinkTests(StudyApiTestCase):
     @override_settings(SHOW_DEBUG_MAGIC_LINK=False)
     def test_debug_link_requires_explicit_opt_in(self):
-        response = APIClient().post(
+        client = APIClient()
+        response = client.post(
             reverse("magic-link-request"),
             {
                 "email": "no-debug-link@example.test",
@@ -143,6 +158,29 @@ class MagicLinkTests(StudyApiTestCase):
         )
         self.assertEqual(response.status_code, 202)
         self.assertNotIn("debug_magic_link", response.data)
+
+        returning = client.post(
+            reverse("returning-magic-link-request"),
+            {"email": "no-debug-link@example.test"},
+            format="json",
+        )
+        self.assertEqual(returning.status_code, 202)
+        self.assertNotIn("debug_magic_link", returning.data)
+
+    def test_returning_debug_link_is_only_exposed_for_a_known_email(self):
+        client = APIClient()
+        _, participant = self.register(client, email="known-debug@example.test")
+
+        known, known_token = self.request_returning_link(client, email=participant.email)
+        unknown, unknown_token = self.request_returning_link(
+            client,
+            email="unknown-debug@example.test",
+        )
+
+        self.assertIn("debug_magic_link", known.data)
+        self.assertIsNotNone(known_token)
+        self.assertNotIn("debug_magic_link", unknown.data)
+        self.assertIsNone(unknown_token)
 
     def test_registration_fixes_full_order_and_snapshots_configuration(self):
         client = APIClient(enforce_csrf_checks=True)
@@ -217,59 +255,141 @@ class MagicLinkTests(StudyApiTestCase):
                     )
                 )
 
-    def test_repeated_registration_reuses_run_and_preserves_demographics(self):
+    def test_registration_rejects_a_case_insensitive_duplicate_with_email_error(self):
+        client = APIClient(enforce_csrf_checks=True)
+        _, participant = self.register(client)
+        run = participant.study_runs.get(protocol_version=2)
+
+        response = client.post(
+            reverse("magic-link-request"),
+            {
+                "email": " Participant@Example.TEST ",
+                "speciality": "ICM",
+                "years_experience": 30,
+            },
+            format="json",
+        )
+
+        participant.refresh_from_db()
+        run.refresh_from_db()
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            str(response.data["email"]),
+            "This email is already registered. Request a returning-participant link instead.",
+        )
+        self.assertEqual(Participant.objects.count(), 1)
+        self.assertEqual(StudyRun.objects.filter(participant=participant).count(), 1)
+        self.assertEqual(participant.speciality, "GAS")
+        self.assertEqual(participant.years_experience, 7)
+        self.assertEqual(MagicLink.objects.filter(participant=participant).count(), 1)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_returning_request_reuses_completed_run_order_and_demographics(self):
         client = APIClient(enforce_csrf_checks=True)
         _, participant = self.register(client)
         run = participant.study_runs.get(protocol_version=2)
         original_order = list(run.group_order)
         original_tutorial_order = list(run.tutorial_group_order)
 
+        run.status = StudyRun.Status.COMPLETED
+        run.current_group_position = None
+        run.completed_trials = run.total_trials
+        run.completed_at = timezone.now()
+        run.save(
+            update_fields=(
+                "status",
+                "current_group_position",
+                "completed_trials",
+                "completed_at",
+            )
+        )
         configuration = ExperimentConfiguration.load()
         configuration.trials_per_group = 9
         configuration.tutorial_trials = 10
         configuration.save()
-        self.register(
-            client,
-            email=participant.email,
-            speciality="ICM",
-            years_experience=30,
-        )
+
+        response, token = self.request_returning_link(client, email="PARTICIPANT@example.test")
 
         participant.refresh_from_db()
         run.refresh_from_db()
+        self.assertIsNotNone(token)
+        self.assertEqual(
+            response.data["detail"],
+            ("If this address is registered, a returning-participant link has been sent."),
+        )
         self.assertEqual(StudyRun.objects.filter(participant=participant).count(), 1)
+        self.assertEqual(run.status, StudyRun.Status.COMPLETED)
         self.assertEqual(run.group_order, original_order)
         self.assertEqual(run.tutorial_group_order, original_tutorial_order)
         self.assertEqual(run.tutorial_trials_required, 6)
         self.assertEqual(run.trials_per_group, 1)
         self.assertEqual(participant.speciality, "GAS")
         self.assertEqual(participant.years_experience, 7)
-        self.assertEqual(MagicLink.objects.filter(participant=participant).count(), 2)
-        self.assertEqual(MagicLink.objects.filter(participant=participant, used_at=None).count(), 2)
+        returning_link = MagicLink.objects.filter(participant=participant).latest("created_at")
+        self.assertEqual(returning_link.study_run, run)
+        self.assertEqual(returning_link.speciality, "GAS")
+        self.assertEqual(returning_link.years_experience, 7)
 
-    def test_new_request_does_not_revoke_an_earlier_link(self):
+        verified, _ = self.verify(APIClient(enforce_csrf_checks=True), token)
+        self.assertEqual(verified.data["session"]["id"], run.pk)
+        self.assertEqual(verified.data["session"]["phase"], "completed")
+
+    @override_settings(SHOW_DEBUG_MAGIC_LINK=False)
+    def test_returning_request_is_generic_and_unknown_email_creates_nothing(self):
+        client = APIClient(enforce_csrf_checks=True)
+        with self.settings(SHOW_DEBUG_MAGIC_LINK=True):
+            _, participant = self.register(client, email="privacy@example.test")
+        expected = {
+            "detail": "If this address is registered, a returning-participant link has been sent."
+        }
+
+        existing = client.post(
+            reverse("returning-magic-link-request"),
+            {"email": "PRIVACY@example.test"},
+            format="json",
+        )
+        missing = client.post(
+            reverse("returning-magic-link-request"),
+            {"email": "absent@example.test"},
+            format="json",
+        )
+
+        self.assertEqual(existing.status_code, 202)
+        self.assertEqual(missing.status_code, 202)
+        self.assertEqual(existing.data, expected)
+        self.assertEqual(missing.data, expected)
+        self.assertEqual(Participant.objects.count(), 1)
+        self.assertFalse(Participant.objects.filter(email="absent@example.test").exists())
+        self.assertEqual(StudyRun.objects.count(), 1)
+        self.assertEqual(MagicLink.objects.filter(participant=participant).count(), 2)
+        self.assertEqual(len(mail.outbox), 2)
+
+    def test_registration_and_returning_links_are_independently_usable(self):
         first_client = APIClient(enforce_csrf_checks=True)
         first_token, participant = self.register(first_client)
-        self.register(first_client, email=participant.email)
+        _, returning_token = self.request_returning_link(first_client, email=participant.email)
+        self.assertIsNotNone(returning_token)
 
-        response = first_client.post(
-            reverse("magic-link-verify"), {"token": first_token}, format="json"
+        first_response, _ = self.verify(first_client, first_token)
+        second_client = APIClient(enforce_csrf_checks=True)
+        second_response, _ = self.verify(second_client, returning_token)
+
+        self.assertEqual(
+            first_response.data["session"]["id"], second_response.data["session"]["id"]
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            MagicLink.objects.filter(participant=participant, used_at__isnull=False).count(), 2
+        )
 
-    def test_database_email_issuance_limit(self):
+    def test_returning_request_respects_database_email_issuance_limit(self):
         client = APIClient(enforce_csrf_checks=True)
         _, participant = self.register(client)
-        self.register(client, email=participant.email)
-        self.register(client, email=participant.email)
+        self.request_returning_link(client, email=participant.email)
+        self.request_returning_link(client, email=participant.email)
 
         limited = client.post(
-            reverse("magic-link-request"),
-            {
-                "email": participant.email,
-                "speciality": participant.speciality,
-                "years_experience": participant.years_experience,
-            },
+            reverse("returning-magic-link-request"),
+            {"email": participant.email},
             format="json",
         )
         self.assertEqual(limited.status_code, 429)
@@ -288,7 +408,10 @@ class MagicLinkTests(StudyApiTestCase):
         failed_link = MagicLink.objects.get(email=details["email"])
         self.assertIsNotNone(failed_link.delivery_failed_at)
         with mock.patch("DrugID_API.services.send_mail", return_value=1):
-            request_magic_link(**details)
+            recovery_link = request_returning_magic_link(email=details["email"].upper())
+        self.assertIsNotNone(recovery_link)
+        self.assertEqual(Participant.objects.filter(email=details["email"]).count(), 1)
+        self.assertEqual(StudyRun.objects.count(), 1)
         self.assertEqual(
             MagicLink.objects.filter(
                 email=details["email"], delivery_failed_at__isnull=True
@@ -327,16 +450,25 @@ class MagicLinkTests(StudyApiTestCase):
         token, participant = self.register(client)
         self.verify(client, token)
 
-        response = client.post(
+        self.assertEqual(client.post(reverse("logout")).status_code, 403)
+
+        registration = client.post(
             reverse("magic-link-request"),
             {
-                "email": participant.email,
-                "speciality": participant.speciality,
-                "years_experience": participant.years_experience,
+                "email": "new-bootstrap@example.test",
+                "speciality": "ICM",
+                "years_experience": 2,
             },
             format="json",
         )
-        self.assertEqual(response.status_code, 202)
+        returning = client.post(
+            reverse("returning-magic-link-request"),
+            {"email": participant.email},
+            format="json",
+        )
+
+        self.assertEqual(registration.status_code, 202)
+        self.assertEqual(returning.status_code, 202)
 
 
 class AuthenticationAndIsolationTests(StudyApiTestCase):

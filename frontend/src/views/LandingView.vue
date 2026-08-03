@@ -10,9 +10,12 @@
         </p>
         <div class="button-row">
           <RouterLink class="button button--primary" :to="{ name: 'register' }">
-            Take part in the study
+            Register to take part
           </RouterLink>
-          <a class="button button--quiet" href="#how-it-works">How it works</a>
+          <RouterLink class="button button--quiet" :to="{ name: 'returning-participant' }">
+            Return to my study
+          </RouterLink>
+          <a class="text-link" href="#how-it-works">How it works</a>
         </div>
       </div>
 
@@ -44,7 +47,7 @@
         <li>
           <span>01</span>
           <h3>Register</h3>
-          <p>Tell us your speciality and years of clinical experience.</p>
+          <p>New participants tell us their speciality and years of clinical experience once.</p>
         </li>
         <li>
           <span>02</span>

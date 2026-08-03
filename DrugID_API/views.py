@@ -13,6 +13,7 @@ from DrugID_API.authentication import ParticipantSessionAuthentication
 from DrugID_API.serializers import (
     MagicLinkRequestSerializer,
     MagicLinkVerifySerializer,
+    ReturningMagicLinkRequestSerializer,
     TrialResultInputSerializer,
 )
 from DrugID_API.services import (
@@ -20,6 +21,7 @@ from DrugID_API.services import (
     next_tutorial_trial_for_user,
     outstanding_asset_for_user,
     request_magic_link,
+    request_returning_magic_link,
     resolve_study_asset_path,
     study_run_for_user,
     study_status,
@@ -41,8 +43,26 @@ class MagicLinkRequestView(APIView):
         serializer = MagicLinkRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         debug_link = request_magic_link(**serializer.validated_data)
-        payload = {"detail": "If the address is valid, a sign-in link has been sent."}
+        payload = {"detail": "Registration complete. A sign-in link has been sent."}
         if settings.DEBUG and settings.SHOW_DEBUG_MAGIC_LINK:
+            payload["debug_magic_link"] = debug_link
+        return Response(payload, status=status.HTTP_202_ACCEPTED)
+
+
+class ReturningMagicLinkRequestView(APIView):
+    authentication_classes = []
+    permission_classes = (permissions.AllowAny,)
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "magic_link"
+
+    def post(self, request):
+        serializer = ReturningMagicLinkRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        debug_link = request_returning_magic_link(**serializer.validated_data)
+        payload = {
+            "detail": "If this address is registered, a returning-participant link has been sent."
+        }
+        if settings.DEBUG and settings.SHOW_DEBUG_MAGIC_LINK and debug_link is not None:
             payload["debug_magic_link"] = debug_link
         return Response(payload, status=status.HTTP_202_ACCEPTED)
 

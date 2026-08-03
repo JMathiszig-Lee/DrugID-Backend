@@ -62,7 +62,9 @@ onMounted(async () => {
         <BaseAlert tone="error">
           <p>Request a new email and use the complete link it contains.</p>
         </BaseAlert>
-        <RouterLink class="button button--primary" :to="{ name: 'register' }">Request a new link</RouterLink>
+        <RouterLink class="button button--primary" :to="{ name: 'returning-participant' }">
+          Request a new return link
+        </RouterLink>
       </template>
 
       <template v-else>
@@ -73,8 +75,8 @@ onMounted(async () => {
         </BaseAlert>
         <div class="button-row button-row--centre">
           <button class="button button--quiet" type="button" @click="verify">Try this link again</button>
-          <RouterLink class="button button--primary" :to="{ name: 'register' }">
-            Request a new link
+          <RouterLink class="button button--primary" :to="{ name: 'returning-participant' }">
+            Request a new return link
           </RouterLink>
         </div>
       </template>

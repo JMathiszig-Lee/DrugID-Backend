@@ -12,6 +12,13 @@ class MagicLinkRequestSerializer(serializers.Serializer):
         return value.strip().lower()
 
 
+class ReturningMagicLinkRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=254)
+
+    def validate_email(self, value):
+        return value.strip().lower()
+
+
 class MagicLinkVerifySerializer(serializers.Serializer):
     token = serializers.CharField(min_length=20, max_length=512, trim_whitespace=True)
 

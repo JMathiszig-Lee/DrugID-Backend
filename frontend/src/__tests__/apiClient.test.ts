@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { apiRequest, readCookie } from '../api/client'
-import { getNextTutorialTrial, submitTutorialTrialResult } from '../api/study'
+import {
+  getNextTutorialTrial,
+  requestMagicLink,
+  requestReturningMagicLink,
+  submitTutorialTrialResult,
+} from '../api/study'
 
 function jsonResponse(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload), {
@@ -65,6 +70,41 @@ describe('apiRequest', () => {
 
     const request = fetchMock.mock.calls[0]?.[1] as RequestInit
     expect(request.headers).not.toHaveProperty('X-CSRFToken')
+  })
+
+  it('keeps new registration and returning-participant requests on separate endpoints', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() =>
+        Promise.resolve(
+          jsonResponse({ detail: 'If the address is registered, a link is on its way.' }, 202),
+        ),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await requestMagicLink({
+      email: 'new@example.test',
+      speciality: 'ICM',
+      years_experience: 5,
+    })
+    await requestReturningMagicLink({ email: 'returning@example.test' })
+
+    expect(fetchMock.mock.calls.map(([path]) => path)).toEqual([
+      '/api/auth/magic-link/',
+      '/api/auth/magic-link/returning/',
+    ])
+    expect(fetchMock.mock.calls[0]?.[1]).toEqual(
+      expect.objectContaining({
+        body: JSON.stringify({
+          email: 'new@example.test',
+          speciality: 'ICM',
+          years_experience: 5,
+        }),
+      }),
+    )
+    expect(fetchMock.mock.calls[1]?.[1]).toEqual(
+      expect.objectContaining({ body: JSON.stringify({ email: 'returning@example.test' }) }),
+    )
   })
 
   it('stops an authenticated POST when the CSRF cookie is missing', async () => {

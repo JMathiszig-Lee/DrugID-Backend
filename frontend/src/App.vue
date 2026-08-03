@@ -13,7 +13,8 @@
 
       <nav aria-label="Primary navigation">
         <RouterLink :to="{ name: 'landing' }">About</RouterLink>
-        <RouterLink class="nav-join" :to="{ name: 'register' }">Take part</RouterLink>
+        <RouterLink class="nav-return" :to="{ name: 'returning-participant' }">Return</RouterLink>
+        <RouterLink class="nav-join" :to="{ name: 'register' }">Register</RouterLink>
       </nav>
     </header>
 

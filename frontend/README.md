@@ -2,6 +2,11 @@
 
 Vue 3 and Vite client for registration, magic-link verification, and the timed ampoule study.
 
+New and returning participants use separate entry points. `/register` creates a new participant and
+collects study demographics, while `/return` only requests access to an existing study session. The
+returning-participant endpoint accepts email only and never creates a participant. New registration
+separately reports an already-registered address and directs that person to the return flow.
+
 ## Local development
 
 Use Node 24.15 or newer within Node 24, then install and run the client:

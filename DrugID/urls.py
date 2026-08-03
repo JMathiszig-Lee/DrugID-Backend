@@ -11,6 +11,11 @@ urlpatterns = [
         name="magic-link-request",
     ),
     path(
+        "api/auth/magic-link/returning/",
+        views.ReturningMagicLinkRequestView.as_view(),
+        name="returning-magic-link-request",
+    ),
+    path(
         "api/auth/verify/",
         views.MagicLinkVerifyView.as_view(),
         name="magic-link-verify",

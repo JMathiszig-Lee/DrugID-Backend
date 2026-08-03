@@ -330,7 +330,9 @@ onBeforeRouteLeave(() => {
       <BaseAlert tone="error" title="You are no longer signed in">
         <p>Your saved progress remains on the server, but this browser session has expired.</p>
       </BaseAlert>
-      <RouterLink class="button button--primary" :to="{ name: 'register' }">Request a new link</RouterLink>
+      <RouterLink class="button button--primary" :to="{ name: 'returning-participant' }">
+        Request a new return link
+      </RouterLink>
     </section>
 
     <section v-else-if="sessionError && !status" class="message-card study-message">

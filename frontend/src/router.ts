@@ -15,6 +15,11 @@ export const router = createRouter({
       component: () => import('./views/RegisterView.vue'),
     },
     {
+      path: '/return',
+      name: 'returning-participant',
+      component: () => import('./views/ReturningParticipantView.vue'),
+    },
+    {
       path: '/check-email',
       name: 'check-email',
       component: () => import('./views/CheckEmailView.vue'),

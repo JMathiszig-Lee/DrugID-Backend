@@ -1,7 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import BaseAlert from '../components/BaseAlert.vue'
-import { registrationResponse } from '../state/registration'
+import { magicLinkRequestKind, registrationResponse } from '../state/registration'
+
+const route = useRoute()
+const returningParticipant = computed(
+  () => route.query.flow === 'returning' || magicLinkRequestKind.value === 'returning',
+)
+
+const retryRoute = computed(() => ({
+  name: returningParticipant.value ? 'returning-participant' : 'register',
+}))
 
 const detail = computed(
   () => registrationResponse.value?.detail ?? 'If the address can take part, a study link is on its way.',
@@ -24,9 +34,16 @@ const debugLink = computed(() => {
   <div class="page centre-page">
     <section class="message-card">
       <div class="mail-icon" aria-hidden="true">✉</div>
-      <span class="eyebrow">Link requested</span>
+      <span class="eyebrow">{{ returningParticipant ? 'Return link requested' : 'Registration link requested' }}</span>
       <h1>Check your email</h1>
       <p class="lede">{{ detail }}</p>
+
+      <BaseAlert v-if="returningParticipant" tone="info" title="What happens next">
+        <p>
+          If the email is registered, the link will return you to your saved study progress. Check
+          the spelling or register first if no email arrives.
+        </p>
+      </BaseAlert>
 
       <BaseAlert tone="info" title="The link is time-limited">
         <p>Open it in this browser when you are ready to begin. If it has expired, request another.</p>
@@ -38,7 +55,9 @@ const debugLink = computed(() => {
       </BaseAlert>
 
       <div class="button-row button-row--centre">
-        <RouterLink class="button button--quiet" :to="{ name: 'register' }">Request another link</RouterLink>
+        <RouterLink class="button button--quiet" :to="retryRoute">
+          {{ returningParticipant ? 'Request another return link' : 'Register with another email' }}
+        </RouterLink>
         <RouterLink class="button button--primary" :to="{ name: 'landing' }">Return home</RouterLink>
       </div>
     </section>
