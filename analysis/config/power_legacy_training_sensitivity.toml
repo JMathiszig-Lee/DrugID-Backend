@@ -1,0 +1,51 @@
+status = "exploratory_legacy_protocol_1_training_sensitivity_not_for_recruitment"
+
+# Focused sensitivity grid: the conservative 25%-legacy style effect at a
+# representative 25 trials per style, across no, legacy-sized and 50%-stronger
+# period/progress effects. The main N x repeat grid is in power_legacy_pilot.toml.
+participant_counts = [24, 30, 36, 48, 60]
+trials_per_style = 25
+effect_scales = [0.25]
+learning_scales = [0.0, 1.0, 1.5]
+
+simulations = 5000
+seed = 20260803
+alpha = 0.05
+target_power = 0.80
+mc_confidence_level = 0.95
+maximum_fit_failure_rate = 0.05
+covariance_estimator = "bias_reduced"
+deadline_ms = 3000
+nonstarter_probability = 0.05
+dropout_probability = 0.10
+missing_result_probability = 0.00025
+number_of_target_drugs = 20
+
+[accuracy]
+incorrect_choice_probability_industry = 0.043
+incorrect_choice_probability_iso = 0.024
+incorrect_choice_probability_black_white = 0.018
+participant_log_odds_sd = 0.98
+participant_style_log_odds_sd = 0.45
+drug_log_odds_sd = 0.72
+drug_style_log_odds_sd = 0.35
+period_log_odds_change = 0.327
+within_period_log_odds_change = 0.614
+
+[reaction_time]
+industry_geometric_mean_ms = 2557
+geometric_mean_ratio_iso = 0.601
+geometric_mean_ratio_black_white = 0.969
+participant_log_sd = 0.17
+participant_style_log_sd = 0.10
+drug_log_sd = 0.16
+drug_style_log_sd = 0.08
+residual_log_sd = 0.44
+participant_accuracy_rt_correlation = -0.18
+participant_style_accuracy_rt_correlation = 0.0
+drug_style_accuracy_rt_correlation = 0.0
+period_log_change = -0.035
+within_period_log_change = -0.107
+
+[figures]
+dpi = 300

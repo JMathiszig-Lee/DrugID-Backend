@@ -2,4 +2,5 @@ from django.apps import AppConfig
 
 
 class DrugidApiConfig(AppConfig):
-    name = 'DrugID_API'
+    default_auto_field = "django.db.models.AutoField"
+    name = "DrugID_API"

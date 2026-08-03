@@ -1,0 +1,22 @@
+schema_version = 1
+analysis_name = "Ampoule display-style study"
+style_reference = "Industry"
+style_order = ["Industry", "ISO", "Black and white"]
+alpha = 0.05
+confidence_level = 0.95
+bootstrap_iterations = 2000
+bootstrap_seed = 20260802
+training_bins = 10
+minimum_plausible_rt_ms = 200
+
+[models]
+covariance = "exchangeable"
+adjust_for_period = true
+adjust_for_within_period_progress = true
+adjust_for_target_drug = true
+adjust_for_configuration = true
+
+[figures]
+dpi = 300
+width_inches = 7.2
+height_inches = 4.5

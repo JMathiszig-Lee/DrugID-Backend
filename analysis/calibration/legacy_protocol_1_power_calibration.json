@@ -1,0 +1,294 @@
+{
+  "censored_lognormal_response_time_model": {
+    "caveat": "Participant and drug SDs are the population SDs of mean-centered fixed-effect coefficients, not REML random-effect estimates. They are exploratory variance decomposition inputs from 12 participants and 21 legacy target labels.",
+    "fixed_effects": {
+      "period_2_vs_1_log_change": -0.029854143739039177,
+      "period_3_vs_1_log_change": -0.06981600638834301,
+      "style_log_ratio_black_white_vs_industry": -0.031121268045237387,
+      "style_log_ratio_iso_vs_industry": -0.5091571097350147,
+      "within_period_log_change": -0.10728063849932376
+    },
+    "formula": "log(response time) ~ style + categorical period + within-period progress + target drug + participant",
+    "latent_style_geometric_mean_ratios": {
+      "black_white": 0.9693580137966097,
+      "industry": 1.0,
+      "iso": 0.6010019440650051
+    },
+    "mean_centered_industry_geometric_mean_ms_at_period_1_progress_0": 2557.0867847792433,
+    "method": "Right-censored Gaussian likelihood on log milliseconds; timeouts censored at each trial's preserved deadline; participant and target drug included as fixed effects",
+    "observations": 1640,
+    "optimizer": {
+      "iterations": 48,
+      "maximum_absolute_gradient": 0.0023542513080485605,
+      "name": "scipy L-BFGS-B with analytic gradient",
+      "success": true
+    },
+    "response_events": 1394,
+    "right_censored": 246,
+    "simulator_training_parameters": {
+      "period_log_change": -0.034908003194171505,
+      "period_method": "One linear simulator step is half the fitted period-3-versus-period-1 contrast",
+      "within_period_log_change": -0.10728063849932376
+    },
+    "variance_decomposition": {
+      "participant_log_sd": 0.17411815569252315,
+      "residual_log_sd": 0.44197766726776905,
+      "target_drug_log_sd": 0.15743526446720654
+    }
+  },
+  "conditional_error_model": {
+    "caveat": "Only observed responses reveal the selected choice. With few errors and several zero-error participant/drug cells, random-effect SDs are prior-sensitive exploratory nuisance estimates, not precise variance components.",
+    "conditional_incorrect_choice_probability_at_period_1_progress_0": {
+      "black_white": 0.018281182657918914,
+      "industry": 0.04278411764352492,
+      "iso": 0.02403324993852968
+    },
+    "fit_warnings": [],
+    "fixed_effects": {
+      "intercept": -3.1078619977885618,
+      "period_linear_log_odds_change": -0.3269158003595391,
+      "style_log_odds_black_white_vs_industry": -0.8755706720889076,
+      "style_log_odds_iso_vs_industry": -0.5961282348315666,
+      "within_period_log_odds_change": -0.6137123318000485
+    },
+    "formula": "incorrect ~ style + linear period + within-period progress + (1|participant) + (1|target drug)",
+    "incorrect_choices": 35,
+    "method": "Statsmodels BinomialBayesMixedGLM variational Bayes; incorrect choice among valid observed responses; participant and target-drug random intercepts",
+    "observations": 1394,
+    "optimizer": {
+      "deterministic_start": "all posterior means 0; all posterior SDs exp(-0.5)",
+      "iterations": 73,
+      "name": "BFGS via fit_vb",
+      "success": true
+    },
+    "participants": 12,
+    "priors": {
+      "fixed_effect_prior_sd": 2.0,
+      "log_random_sd_prior_sd": 1.0
+    },
+    "random_intercept_log_sd": {
+      "participant": -0.02017136919212274,
+      "target_drug": -0.3239644176027063
+    },
+    "random_intercept_sd": {
+      "participant": 0.9800307118441121,
+      "target_drug": 0.7232759778151711
+    },
+    "simulator_training_parameters": {
+      "period_log_odds_change": 0.3269158003595391,
+      "sign_convention": "Positive simulator values are subtracted from incorrect-choice log odds",
+      "within_period_log_odds_change": 0.6137123318000485
+    },
+    "target_drugs": 21
+  },
+  "counts": {
+    "correct_response_times": 1359,
+    "excluded_or_missing_outcome_rows": 70,
+    "incorrect_observed_choices": 35,
+    "input_rows": 1710,
+    "observed_responses": 1394,
+    "participants": 12,
+    "right_censored": 246,
+    "target_drug_labels": 21,
+    "valid_submitted_outcomes": 1640
+  },
+  "crude_participant_accuracy_rt_correlation": {
+    "caveat": "Crude observed-response diagnostic only: it ignores censoring, drug, period and progress and is extremely unstable with 12 participants.",
+    "method": "Subtract each style's row-level mean incorrect indicator and mean log observed RT; average each residual by participant; correlate the two participant means",
+    "participants": 12,
+    "pearson_correlation": -0.17925511587834406
+  },
+  "drug_by_style_heterogeneity_diagnostics": {
+    "caveat": "These aggregate target-drug-by-style contrasts do not fit a drug random-slope model and do not establish generalization to ampoules outside the tested set.",
+    "implied_independent_drug_style_log_odds_sd": 0.7701239995983317,
+    "implied_independent_drug_style_log_sd": 0.14377654540724805,
+    "incorrect_log_odds_contrast_sd_root_mean_square": 1.0891198049409727,
+    "incorrect_log_odds_pairwise_contrast_sd": {
+      "Black and white vs ISO": {
+        "sample_sd": 1.140225659481889,
+        "target_drugs": 20
+      },
+      "Black and white vs Industry": {
+        "sample_sd": 0.9172719204262513,
+        "target_drugs": 20
+      },
+      "ISO vs Industry": {
+        "sample_sd": 1.1903963701224125,
+        "target_drugs": 20
+      }
+    },
+    "log_rt_contrast_sd_root_mean_square": 0.20333074046608135,
+    "log_rt_pairwise_contrast_sd": {
+      "Black and white vs ISO": {
+        "sample_sd": 0.1901413486232243,
+        "target_drugs": 20
+      },
+      "Black and white vs Industry": {
+        "sample_sd": 0.20943745453451484,
+        "target_drugs": 20
+      },
+      "ISO vs Industry": {
+        "sample_sd": 0.20979130162449378,
+        "target_drugs": 20
+      }
+    },
+    "observed_responses_per_drug_style_cell": {
+      "maximum": 37,
+      "median": 22.0,
+      "minimum": 10
+    },
+    "planning_drug_style_log_odds_sd": 0.35,
+    "planning_drug_style_log_sd": 0.08,
+    "planning_value_classification": "explicit regularized planning assumptions",
+    "regularization": "The raw contrast dispersion includes finite-cell sampling noise, unequal drug use, participant mix and deadline selection. A defensible noise subtraction is not identified by this small legacy table, especially for sparse binary errors. The configured 0.08 and 0.35 values are therefore conservative planning assumptions, not rounded variance-component estimates.",
+    "target_drugs_with_all_three_styles": 20,
+    "zero_error_drug_style_cells": 38
+  },
+  "implementation": {
+    "module_sha256": "ba9d71fd4ecd1fdc3272c02378149df6b271b77af27fdc2a589dbf3e2f8ccc00",
+    "python": "3.14.6",
+    "software_versions": {
+      "numpy": "2.5.1",
+      "pandas": "3.0.5",
+      "patsy": "1.0.2",
+      "scipy": "1.18.0",
+      "statsmodels": "0.14.6"
+    }
+  },
+  "methodological_caveats": [
+    "The source is early protocol-1 experimental data, not confirmatory protocol-2 data.",
+    "Only 12 participants contributed; style order was reconstructed and not verified.",
+    "Historical deadlines are handled trial by trial rather than replaced by one value.",
+    "Choice correctness is unknowable for timeouts, so the error model conditions on response.",
+    "No formal participant-by-style random-slope model is fit; crude contrast diagnostics are weak planning inputs and repeated-trial gains may otherwise be overstated.",
+    "Observed legacy style effects may be exaggerated; power simulations must include prespecified shrinkage toward the null and a no-style-effect calibration."
+  ],
+  "participant_by_style_heterogeneity_diagnostics": {
+    "caveat": "These are non-identifying participant-by-style contrast diagnostics, not fitted random-slope variances. The legacy order is inferred and cell sizes are uneven.",
+    "implied_independent_participant_style_log_odds_sd": 0.6411814380282643,
+    "implied_independent_participant_style_log_sd": 0.10151268497524214,
+    "incorrect_log_odds_contrast_sd_root_mean_square": 0.9067674856014556,
+    "incorrect_log_odds_pairwise_contrast_sd": {
+      "Black and white vs ISO": {
+        "participants": 11,
+        "sample_sd": 0.4668835575950525
+      },
+      "Black and white vs Industry": {
+        "participants": 11,
+        "sample_sd": 1.1223939216569756
+      },
+      "ISO vs Industry": {
+        "participants": 11,
+        "sample_sd": 0.9944513296822628
+      }
+    },
+    "log_rt_contrast_sd_root_mean_square": 0.14356061584489496,
+    "log_rt_pairwise_contrast_sd": {
+      "Black and white vs ISO": {
+        "participants": 11,
+        "sample_sd": 0.14050446429356261
+      },
+      "Black and white vs Industry": {
+        "participants": 11,
+        "sample_sd": 0.09680528916531177
+      },
+      "ISO vs Industry": {
+        "participants": 11,
+        "sample_sd": 0.18087615312278144
+      }
+    },
+    "observed_responses_per_participant_style_cell": {
+      "maximum": 58,
+      "median": 45.0,
+      "minimum": 1
+    },
+    "participants_with_all_three_styles": 11,
+    "regularization": "The conditional-error implied SD is divided by sqrt(2) once more before use, because only 35 errors create many zero-error cells; this is explicit shrinkage, not an estimated variance component.",
+    "regularized_planning_participant_style_log_odds_sd": 0.45338374280072774,
+    "zero_error_participant_style_cells": 14
+  },
+  "power_legacy_pilot_toml_alignment": {
+    "accuracy": {
+      "drug_log_odds_sd": 0.72,
+      "drug_style_log_odds_sd": 0.35,
+      "incorrect_choice_probability_black_white": 0.018,
+      "incorrect_choice_probability_industry": 0.043,
+      "incorrect_choice_probability_iso": 0.024,
+      "participant_log_odds_sd": 0.98,
+      "participant_style_log_odds_sd": 0.45,
+      "period_log_odds_change": 0.327,
+      "within_period_log_odds_change": 0.614
+    },
+    "reaction_time": {
+      "drug_log_sd": 0.16,
+      "drug_style_log_sd": 0.08,
+      "geometric_mean_ratio_black_white": 0.969,
+      "geometric_mean_ratio_iso": 0.601,
+      "industry_geometric_mean_ms": 2557,
+      "participant_accuracy_rt_correlation": -0.18,
+      "participant_log_sd": 0.17,
+      "participant_style_log_sd": 0.1,
+      "period_log_change": -0.035,
+      "residual_log_sd": 0.44,
+      "within_period_log_change": -0.107
+    },
+    "rounding_statement": "Fitted and crude diagnostic values reproduce the checked-in exploratory TOML after declared rounding or regularization. Drug-by-style values are explicitly classified as planning assumptions rather than aligned estimates."
+  },
+  "privacy": {
+    "direct_identifiers_emitted": false,
+    "pseudonymous_row_or_group_identifiers_emitted": false,
+    "statement": "Only aggregate counts, coefficients and diagnostics are written; participant and row identifiers are used transiently for clustering and are never emitted."
+  },
+  "raw_style_checks": {
+    "Black and white": {
+      "correct_outcomes": 438,
+      "correct_response_geometric_mean_ms": 1952.6437241141298,
+      "deadline_ms_counts": {
+        "3000": 265,
+        "5000": 259
+      },
+      "incorrect_observed_choices": 7,
+      "observed_responses": 445,
+      "participants": 11,
+      "raw_conditional_incorrect_choice_probability": 0.015730337078651686,
+      "timeouts_or_other_censored_responses": 79,
+      "valid_submitted_outcomes": 524
+    },
+    "ISO": {
+      "correct_outcomes": 488,
+      "correct_response_geometric_mean_ms": 1308.4331884150301,
+      "deadline_ms_counts": {
+        "3000": 268,
+        "5000": 264
+      },
+      "incorrect_observed_choices": 12,
+      "observed_responses": 500,
+      "participants": 11,
+      "raw_conditional_incorrect_choice_probability": 0.024,
+      "timeouts_or_other_censored_responses": 32,
+      "valid_submitted_outcomes": 532
+    },
+    "Industry": {
+      "correct_outcomes": 433,
+      "correct_response_geometric_mean_ms": 1885.8534302320984,
+      "deadline_ms_counts": {
+        "3000": 312,
+        "5000": 272
+      },
+      "incorrect_observed_choices": 16,
+      "observed_responses": 449,
+      "participants": 12,
+      "raw_conditional_incorrect_choice_probability": 0.035634743875278395,
+      "timeouts_or_other_censored_responses": 135,
+      "valid_submitted_outcomes": 584
+    }
+  },
+  "schema_version": "1.0",
+  "source": {
+    "bytes": 1088372,
+    "filename": "derived_trials.csv",
+    "kind": "pipeline derived_trials.csv in explicit legacy-pilot mode",
+    "sha256": "4746c2b78cf7958a92f97c1a2699a308497d1ec058caa7dbecfecbdcfca5fdf5"
+  },
+  "status": "exploratory_legacy_protocol_1_calibration_not_for_recruitment"
+}

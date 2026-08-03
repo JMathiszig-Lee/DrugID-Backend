@@ -1,0 +1,59 @@
+status = "illustrative_not_for_recruitment"
+participant_counts = [24, 36, 48, 60, 72, 90, 120]
+trials_per_style = 50
+effect_scales = [1.0]
+learning_scales = [1.0]
+# This small default is a pipeline/calibration diagnostic. A locked recruitment
+# run should override it with at least 5,000 successfully fitted simulations.
+simulations = 50
+seed = 20260802
+alpha = 0.05
+target_power = 0.80
+covariance_estimator = "robust"
+mc_confidence_level = 0.95
+maximum_fit_failure_rate = 0.05
+deadline_ms = 3000
+nonstarter_probability = 0.05
+# Chance that a starter withdraws after a uniformly selected completed trial,
+# allowing attrition within as well as between display-style periods.
+dropout_probability = 0.10
+# Per generated trial. A missing result is terminal because the application
+# cannot advance while an outstanding trial has no submitted result.
+missing_result_probability = 0.0005
+number_of_target_drugs = 20
+
+[accuracy]
+# Conditional incorrect-choice probabilities among latent responses at average
+# participant/drug effects. Timeouts are additional failures after the deadline
+# is applied. These retain the notebook's illustrative numbers, but not its
+# ambiguous "pass/fail" label; replace them before recruitment.
+incorrect_choice_probability_industry = 0.080
+incorrect_choice_probability_iso = 0.076
+incorrect_choice_probability_black_white = 0.072
+participant_log_odds_sd = 0.55
+participant_style_log_odds_sd = 0.0
+drug_log_odds_sd = 0.20
+drug_style_log_odds_sd = 0.0
+period_log_odds_change = 0.05
+within_period_log_odds_change = 0.15
+
+[reaction_time]
+# These geometric-mean ratios are illustrative placeholders, not estimates to
+# adopt simply because the legacy pilot happened to show a large difference.
+industry_geometric_mean_ms = 1800
+geometric_mean_ratio_iso = 0.90
+geometric_mean_ratio_black_white = 0.96
+participant_log_sd = 0.25
+participant_style_log_sd = 0.0
+drug_log_sd = 0.12
+drug_style_log_sd = 0.0
+residual_log_sd = 0.35
+# Positive values make participants with greater error propensity slower.
+participant_accuracy_rt_correlation = 0.30
+participant_style_accuracy_rt_correlation = 0.0
+drug_style_accuracy_rt_correlation = 0.0
+period_log_change = -0.03
+within_period_log_change = -0.12
+
+[figures]
+dpi = 300

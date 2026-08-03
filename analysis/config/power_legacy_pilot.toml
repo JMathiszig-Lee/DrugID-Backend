@@ -1,0 +1,102 @@
+status = "exploratory_legacy_protocol_1_calibrated_not_for_recruitment"
+
+# Design grid. Each complete participant undertakes all three styles, so the
+# total planned trial count is three times each trials-per-style value.
+participant_counts = [24, 30, 36, 48, 60]
+trials_per_style = [10, 25, 50]
+
+# Style contrasts are multiplied on the conditional-error logit scale and the
+# latent-RT log-ratio scale. The raw legacy estimate is an optimistic reference;
+# 0.50 and 0.25 are shrinkage sensitivity analyses toward no style effect.
+effect_scales = [1.0, 0.50, 0.25]
+
+# The main grid retains the legacy-estimated practice/fatigue magnitude. A
+# separate sensitivity config varies this scale without multiplying the main
+# effect-size grid unnecessarily.
+learning_scales = [1.0]
+
+# A recruitment-grade run uses at least 5,000 successfully fitted models per
+# design/effect/null cell and outcome. Use a CLI override only for smoke tests;
+# the effective configuration and actual count are retained in the manifest.
+simulations = 5000
+seed = 20260802
+alpha = 0.05
+target_power = 0.80
+mc_confidence_level = 0.95
+maximum_fit_failure_rate = 0.05
+# The 20-replicate calibration diagnostic showed material liberal rejection
+# with the ordinary sandwich estimator. Use the planned bias-reduced GEE
+# sensitivity for this exploratory power grid and still require each matched
+# no-style-effect Monte Carlo interval to contain alpha before flagging a design.
+covariance_estimator = "bias_reduced"
+
+# The intended future protocol deadline. Legacy rows contained a recoverable
+# mixture of 3,000 and 5,000 ms timing limits, so 3,000 ms is a prospective
+# design assumption rather than a claim that every historical trial used it.
+deadline_ms = 3000
+
+# Planning assumptions. All 12 registered legacy participants started, but the
+# sample is too small to estimate operational attrition reliably; conservative
+# non-start/dropout allowances are retained. Terminal missingness is a technical
+# assumption for the deployed application, not 68/1710 legacy orphan rows.
+nonstarter_probability = 0.05
+dropout_probability = 0.10
+missing_result_probability = 0.00025
+number_of_target_drugs = 20
+
+[accuracy]
+# Legacy protocol-1 Bayesian binomial mixed model of incorrect choices among
+# 1,394 valid observed responses. Values are conditional probabilities at
+# period 1, within-period progress 0 and zero participant/drug random effects.
+# They are not 1 minus marginal accuracy: the simulator separately generates
+# response times and counts deadline timeouts as failures in the accuracy GEE.
+incorrect_choice_probability_industry = 0.043
+incorrect_choice_probability_iso = 0.024
+incorrect_choice_probability_black_white = 0.018
+
+# Exploratory posterior SDs from only 35 incorrect observed choices. These are
+# weakly identified legacy nuisance estimates and must not be read as precise.
+participant_log_odds_sd = 0.98
+drug_log_odds_sd = 0.72
+
+# Regularized planning values for heterogeneity in how a participant or target
+# drug responds to each display style. Crude legacy participant-style accuracy
+# contrast SDs were 0.085-0.159 on the probability scale. Jeffreys-smoothed
+# logit contrasts implied an independent style SD near 0.64, regularized to 0.45
+# because only 11 people had paired data. Omitting these slopes was optimistic.
+participant_style_log_odds_sd = 0.45
+drug_style_log_odds_sd = 0.35
+
+# Reduction in the incorrect-choice log odds per later period and from the start
+# to the end of a style period, estimated from the early legacy responses.
+period_log_odds_change = 0.327
+within_period_log_odds_change = 0.614
+
+[reaction_time]
+# Censored log-normal calibration to the early protocol-1 response-time data.
+# Ratios are latent pre-deadline style ratios; realized correct-response ratios
+# differ after deadline censoring and are exported as calibration checks.
+industry_geometric_mean_ms = 2557
+geometric_mean_ratio_iso = 0.601
+geometric_mean_ratio_black_white = 0.969
+participant_log_sd = 0.17
+drug_log_sd = 0.16
+residual_log_sd = 0.44
+
+
+# Crude paired legacy log-RT contrast SDs were approximately 0.10-0.18 for
+# participants and 0.19 for drugs before subtracting finite-trial noise. The
+# centered style-effect SDs below regularize those unstable estimates.
+participant_style_log_sd = 0.10
+drug_style_log_sd = 0.08
+
+# Noisy participant-level legacy estimate: people with greater error propensity
+# were slightly faster after crude style adjustment. Retained for transparency.
+participant_accuracy_rt_correlation = -0.18
+participant_style_accuracy_rt_correlation = 0.0
+drug_style_accuracy_rt_correlation = 0.0
+period_log_change = -0.035
+within_period_log_change = -0.107
+
+[figures]
+dpi = 300

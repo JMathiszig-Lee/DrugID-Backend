@@ -1,0 +1,166 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18.4-bookworm
+        env:
+          POSTGRES_DB: drugid
+          POSTGRES_USER: drugid
+          POSTGRES_PASSWORD: ci-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U drugid -d drugid"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      SECRET_KEY: ci-only-secret-key-that-is-never-used-in-production
+      DEBUG: "False"
+      ALLOWED_HOSTS: localhost,127.0.0.1,testserver
+      CSRF_TRUSTED_ORIGINS: https://example.test
+      PUBLIC_APP_URL: https://example.test
+      DATABASE_URL: postgresql://drugid:ci-password@127.0.0.1:5432/drugid
+      EMAIL_BACKEND: django.core.mail.backends.locmem.EmailBackend
+      DEFAULT_FROM_EMAIL: no-reply@example.test
+      SESSION_COOKIE_SECURE: "False"
+      CSRF_COOKIE_SECURE: "False"
+      SECURE_SSL_REDIRECT: "False"
+      SECURE_HSTS_SECONDS: "0"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: 0.11.28
+          python-version: 3.14.6
+          enable-cache: true
+
+      - name: Install locked dependencies
+        run: uv sync --frozen --all-groups
+
+      - name: Lint Python
+        run: uv run ruff check DrugID DrugID_API analysis docker manage.py --exclude DrugID_API/migrations
+
+      - name: Check for missing migrations
+        run: uv run python manage.py makemigrations --check --dry-run
+
+      - name: Apply migrations
+        run: uv run python manage.py migrate --noinput
+
+      - name: Run backend tests with coverage
+        run: uv run coverage run -m pytest
+
+      - name: Report backend coverage
+        run: uv run coverage report
+
+      - name: Check production settings
+        env:
+          SESSION_COOKIE_SECURE: "True"
+          CSRF_COOKIE_SECURE: "True"
+          SECURE_SSL_REDIRECT: "True"
+          SECURE_HSTS_SECONDS: "31536000"
+          SECURE_HSTS_INCLUDE_SUBDOMAINS: "True"
+          SECURE_HSTS_PRELOAD: "True"
+        run: uv run python manage.py check --deploy --fail-level WARNING
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.18.0
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Lint frontend
+        run: npm run lint
+
+      - name: Type-check frontend
+        run: npm run typecheck
+
+      - name: Run frontend tests
+        run: npm run test
+
+      - name: Build frontend
+        run: npm run build
+
+  container:
+    name: Container
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [backend, frontend]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Validate Compose configuration
+        env:
+          APP_ENV_FILE: .env.example
+        run: docker compose --env-file .env.example config --quiet
+
+      - name: Build production image
+        run: docker build --target runtime --tag drugid:ci .
+
+      - name: Build and smoke-test analysis image
+        run: |
+          docker build --target analysis --tag drugid-analysis:ci .
+          docker run --rm drugid-analysis:ci --help
+
+      - name: Smoke-test production image
+        run: |
+          docker run --detach --name drugid-ci --publish 8000:8000 --read-only --tmpfs /tmp \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --env SECRET_KEY=ci-container-only-secret-key-0123456789abcdefghijklmnopqrstuvwxyz \
+            --env DEBUG=False \
+            --env ALLOWED_HOSTS=127.0.0.1,localhost \
+            --env PUBLIC_APP_URL=http://localhost:8000 \
+            --env DATABASE_URL=sqlite:////tmp/drugid-ci.sqlite3 \
+            --env EMAIL_BACKEND=django.core.mail.backends.locmem.EmailBackend \
+            --env SESSION_COOKIE_SECURE=False \
+            --env CSRF_COOKIE_SECURE=False \
+            drugid:ci
+          for _ in {1..30}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8000/health/; then
+              curl --fail --silent --show-error http://127.0.0.1:8000/ > /dev/null
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs drugid-ci
+          exit 1
+
+      - name: Stop smoke-test container
+        if: always()
+        run: docker rm --force drugid-ci || true

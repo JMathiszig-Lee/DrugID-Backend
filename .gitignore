@@ -127,3 +127,28 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Unified frontend and generated deployment artefacts
+/frontend/node_modules/
+/frontend/dist/
+!/frontend/src/lib/
+!/frontend/src/lib/*.ts
+/staticfiles/
+/.ruff_cache/
+/.venv/
+/.coverage
+/.coverage.*
+/coverage.xml
+/htmlcov/
+
+# Research snapshots can contain sensitive participant data. Only code and
+# configuration belong in version control; generated analyses stay local.
+/analysis/data/
+/analysis/build/
+/analysis/**/*.html
+/analysis/**/*.pdf
+/analysis/**/*.png
+/analysis/**/*.svg
+
+# Keep the documented environment template while ignoring real environments.
+!.env.example

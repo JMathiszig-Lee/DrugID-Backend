@@ -1,33 +1,47 @@
-"""DrugID URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/3.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, re_path
 
-from rest_framework import routers
 from DrugID_API import views
 
-router = routers.DefaultRouter()
-router.register(r'results', views.ResultsViewSet)
-router.register(r'users', views.UserViewSet)
-# router.register(r'getdrugs', views.DrugSet, 'getdrugs')
-
-
 urlpatterns = [
-    path('', include(router.urls)),
-    path('getdrugs/', views.DrugSet.as_view(), name='get-drugs'),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('admin/', admin.site.urls),
+    path("health/", views.HealthView.as_view(), name="health"),
+    path(
+        "api/auth/magic-link/",
+        views.MagicLinkRequestView.as_view(),
+        name="magic-link-request",
+    ),
+    path(
+        "api/auth/verify/",
+        views.MagicLinkVerifyView.as_view(),
+        name="magic-link-verify",
+    ),
+    path("api/auth/logout/", views.LogoutView.as_view(), name="logout"),
+    path("api/study/session/", views.StudySessionView.as_view(), name="study-session"),
+    path(
+        "api/study/tutorial/trials/next/",
+        views.NextTutorialTrialView.as_view(),
+        name="next-tutorial-trial",
+    ),
+    path(
+        "api/study/tutorial/trials/<int:tutorial_trial_id>/result/",
+        views.TutorialTrialResultView.as_view(),
+        name="tutorial-trial-result",
+    ),
+    path("api/study/trials/next/", views.NextTrialView.as_view(), name="next-trial"),
+    path(
+        "api/study/assets/<int:asset_id>/image/",
+        views.StudyAssetImageView.as_view(),
+        name="study-asset-image",
+    ),
+    path(
+        "api/study/trials/<int:trial_id>/result/",
+        views.TrialResultView.as_view(),
+        name="trial-result",
+    ),
+    path("admin/", admin.site.urls),
+    re_path(
+        r"^(?!api(?:/|$)|admin(?:/|$)|health(?:/|$)|static(?:/|$))(?P<path>.*)$",
+        views.spa_index,
+        name="spa-index",
+    ),
 ]

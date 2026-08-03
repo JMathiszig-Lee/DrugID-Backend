@@ -1,52 +1,58 @@
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
-from DrugID_API.models import Asset, Drug
+from django.conf import settings
+from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
+from django.db.models import Count
 
-import os
+from DrugID_API.models import Asset, Drug, ExperimentConfiguration, Group
 
 
 class Command(BaseCommand):
+    help = "Idempotently load the private ampoule image catalogue."
+
+    @transaction.atomic
     def handle(self, *args, **options):
+        asset_root = Path(settings.STUDY_ASSET_ROOT).resolve()
+        group_directories = {
+            Group.INDUSTRY: "industry",
+            Group.ISO: "iso",
+            Group.BLACK_WHITE: "blackwhite",
+        }
+        supported_suffixes = {".png", ".jpg", ".jpeg", ".webp"}
+        loaded = 0
 
-        label_types = ["industry", "iso", "blackwhite"]
+        for group, directory_name in group_directories.items():
+            directory = asset_root / directory_name
+            if not directory.is_dir():
+                raise CommandError(f"Asset directory does not exist: {directory}")
 
-        # Populates the Drug table
-        names_drug = os.listdir(Path("DrugID_API/static/industry"))
-        for name in names_drug:
-            nm = name[:-4]
-            data_input_drug = Drug(name=nm)
-            data_input_drug.save()
+            for image_path in sorted(directory.iterdir()):
+                if not image_path.is_file() or image_path.suffix.lower() not in supported_suffixes:
+                    continue
+                drug, _ = Drug.objects.get_or_create(name=image_path.stem)
+                Asset.objects.update_or_create(
+                    drug=drug,
+                    group=group,
+                    defaults={"asset_url": f"{directory_name}/{image_path.name}"},
+                )
+                loaded += 1
 
-        # loop through 3 types populating the Asset table
-        for type in label_types:
-            # Directory for each type > 'DrugID_API/assets/' for release > '../../assets/' for debugging
-            label_type_directory = "DrugID_API/static/" + type + "/"
+        common_catalog_size = (
+            Drug.objects.annotate(group_count=Count("assets__group", distinct=True))
+            .filter(group_count=len(Group.values))
+            .count()
+        )
+        required_choices = ExperimentConfiguration.load().choices_per_trial
+        if common_catalog_size < required_choices:
+            raise CommandError(
+                "The common three-group drug catalogue has "
+                f"{common_catalog_size} drugs, but {required_choices} choices are configured."
+            )
 
-            # put all assets names for type in array
-            label_array = os.listdir(Path(label_type_directory))
-
-            # Input individual lables for label type
-            for name_label in label_array:
-                # Shortens label name to remove file extension and inserts data into Drug table
-                n = name_label[:-4]
-                # print(n) debugging
-                # Selects data from last entry made in Drug table
-                drug = Drug.objects.get(name=n)
-                #print(drug.id) debugging
-
-                # creates directory for database
-                path = "static/" + type + "/" + name_label
-                # print(path) debugging
-
-                # creates code depending on the label type
-                if type == "industry":
-                    group_id = 1
-                elif type == "iso":
-                    group_id = 2
-                elif type == "blackwhite":
-                    group_id = 3
-
-                # Inserts Data into table
-                data_input_asset = Asset(drug_id=drug, asset_url=path, group=group_id)
-                data_input_asset.save()
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Loaded {loaded} ampoule image records; "
+                f"{common_catalog_size} drugs are available in every group."
+            )
+        )
